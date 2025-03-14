@@ -14,8 +14,8 @@
 //
 // Authors: Ryohsuke Mitsudome
 
-#ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_LIGHT_HPP_
-#define LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_LIGHT_HPP_
+#ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_MIRROR_HPP_ //KMS_250313
+#define LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_MIRROR_HPP_ //KMS_250313
 
 // NOLINTBEGIN(readability-identifier-naming)
 
@@ -28,16 +28,17 @@
 
 namespace lanelet::autoware
 {
-// AutowareTrafficLight 클래스 정의 (lanelet::TrafficLight 상속)
-class AutowareTrafficLight : public lanelet::TrafficLight
+// AutowareTrafficLight 클래스 정의 (lanelet::TrafficLight 상속) | AutowareTrafficLight -> AutowareTrafficMirror
+class AutowareTrafficMirror : public lanelet::RegulatoryElement  // TrafficLight -> TrafficMirror
 {
 public:
-  using Ptr = std::shared_ptr<AutowareTrafficLight>;  // AutowareTrafficLight의 스마트 포인터 타입 정의
-  static constexpr char RuleName[] = "traffic_light";  // 규칙 이름을 "traffic_light"로 설정
+  using Ptr = std::shared_ptr<AutowareTrafficMirror>;  // AutowareTrafficLight의 스마트 포인터 타입 정의 | chg. AutowareTrafficLight -> AutowareTrafficMirror
+  static constexpr char RuleName[] = "traffic_mirror";  // 규칙 이름을 "traffic_light"로 설정 | chg. traffic_light -> traffic_mirror
+  explicit AutowareTrafficMirror(const lanelet::RegulatoryElementDataPtr & data); // chg AutowareTrafficLight -> AutowareTrafficMirror
 
   struct AutowareRoleNameString
   {
-    static constexpr const char LightBulbs[] = "light_bulbs";  // 신호등 전구의 역할 이름 정의
+    static constexpr const char LightBulbs[] = "light_bulbs";  // 도로반사경 전구의 역할 이름 정의
   };
 
   //! 필수 규칙 파라미터를 이용하여 정지선을 직접 생성하는 정적 함수
@@ -46,7 +47,7 @@ public:
     Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
     const Optional<LineString3d> & stopLine = {}, const LineStrings3d & lightBulbs = {})
   {
-    return Ptr{new AutowareTrafficLight(id, attributes, trafficLights, stopLine, lightBulbs)};
+    return Ptr{new AutowareTrafficMirror(id, attributes, trafficLights, stopLine, lightBulbs)};
   }
 
   /**
@@ -75,17 +76,16 @@ public:
 private:
   // Lanelet2에서 이 객체를 생성할 수 있도록 하기 위해 필요한 부분
   friend class lanelet::RegisterRegulatoryElement<AutowareTrafficLight>;
-  AutowareTrafficLight(
+  AutowareTrafficMirror( // chg AutowareTrafficLight -> AutowareTrafficMirror
     Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
     const Optional<LineString3d> & stopLine, const LineStrings3d & lightBulbs);
-  explicit AutowareTrafficLight(const lanelet::RegulatoryElementDataPtr & data);
 };
 
 // Lanelet2에서 AutowareTrafficLight 클래스를 등록
-static lanelet::RegisterRegulatoryElement<AutowareTrafficLight> regAutowareTraffic;
+static lanelet::RegisterRegulatoryElement<AutowareTrafficMirror> regAutowareTrafficMirror; // chg regAutowareTraffic -> regAutowareTrafficMirror
 
 }  // namespace lanelet::autoware
 
 // NOLINTEND(readability-identifier-naming)
 
-#endif  // LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_LIGHT_HPP_
+#endif  // LANELET2_EXTENSION__REGULATORY_ELEMENTS__AUTOWARE_TRAFFIC_MIRROR_HPP_ //KMS_250313

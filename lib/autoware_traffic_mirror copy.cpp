@@ -16,7 +16,7 @@
 
 // NOLINTBEGIN(readability-identifier-naming)
 
-#include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp" // AutowareTrafficLight 클래스의 정의 포함
+#include "lanelet2_extension/regulatory_elements/autoware_traffic_mirror.hpp" // AutowareTrafficMirror 클래스의 정의 포함
 
 #include <boost/variant.hpp>
 
@@ -128,11 +128,11 @@ LineStringsOrPolygons3d getLsOrPoly(const RuleParameterMap & paramsMap, RoleName
  * @param lightBulbs 신호등 전구 정보 (선택 사항)
  * @return 생성된 RegulatoryElementData 스마트 포인터
  */
-[[maybe_unused]] RegulatoryElementDataPtr constructAutowareTrafficLightData(
-  Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
+[[maybe_unused]] RegulatoryElementDataPtr constructAutowareTrafficMirrorData( // chg 1. constructAutowareTrafficLightData -> constructAutowareTrafficMirrorData | KMS_250313
+  Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficMirrors, // cjg 2. trafficLights -> trafficMirrors, | KMS_250313
   const Optional<LineString3d> & stopLine, const LineStrings3d & lightBulbs)
 {
-  RuleParameterMap rpm = {{RoleNameString::Refers, toRuleParameters(trafficLights)}};
+  RuleParameterMap rpm = {{RoleNameString::Refers, toRuleParameters(trafficMirrors)}}; // chg 12. trafficLights -> trafficMirrors | KMS_250313
 
   if (!!stopLine) {  // stopLine이 존재하면 추가
     RuleParameters rule_parameters = {*stopLine};
@@ -140,37 +140,40 @@ LineStringsOrPolygons3d getLsOrPoly(const RuleParameterMap & paramsMap, RoleName
   }
   if (!lightBulbs.empty()) {  // lightBulbs가 존재하면 추가
     rpm.insert(std::make_pair(
-      AutowareTrafficLight::AutowareRoleNameString::LightBulbs, toRuleParameters(lightBulbs)));
+      AutowareTrafficMirror::AutowareRoleNameString::LightBulbs, toRuleParameters(lightBulbs))); // chg 3. AutowareTrafficLight -> AutowareTrafficMirror
   }
 
+  // 여기가 핵심이다. 실제 lanelet에서 태그를 지정하는 부분! | KMS_250313
   auto data = std::make_shared<RegulatoryElementData>(id, rpm, attributes);
   data->attributes[AttributeName::Type] = AttributeValueString::RegulatoryElement;
-  data->attributes[AttributeName::Subtype] = AttributeValueString::TrafficLight;
+  data->attributes[AttributeName::Subtype] = lanelet::AttributeValueString::TrafficMirror; // ✅ 명확하게 정의된 값 사용  // chg 4. TrafficLight -> TrafficMirror | KMS_250313
   return data;
 }
 }  // namespace
 
 /**
- * @brief AutowareTrafficLight 클래스 생성자 (RegulatoryElementDataPtr 사용)
+ * @brief AutowareTrafficMirror 클래스 생성자 (RegulatoryElementDataPtr 사용)
  * @param data 규제 요소 데이터 포인터
  */
-AutowareTrafficLight::AutowareTrafficLight(const RegulatoryElementDataPtr & data)
-: TrafficLight(data)
-{
+AutowareTrafficMirror::AutowareTrafficMirror(Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
+  const Optional<LineString3d> & stopLine, const LineStrings3d & lightBulbs)
+  : RegulatoryElement(id, attributes) {
+  // 필요한 초기화 코드 추가
 }
 
 /**
- * @brief AutowareTrafficLight 클래스 생성자
+ * @brief AutowareTrafficMirror 클래스 생성자
  * @param id 규제 요소 ID
  * @param attributes 속성 맵
- * @param trafficLights 신호등 정보
+ * @param trafficMirrors 신호등 정보 | trafficLights -> trafficMirrors
  * @param stopLine 정지선 정보 (선택 사항)
  * @param lightBulbs 신호등 전구 정보 (선택 사항)
  */
-AutowareTrafficLight::AutowareTrafficLight(
-  Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
+AutowareTrafficMirror::AutowareTrafficMirror(
+  Id id, const AttributeMap & attributes,
+  const LineStringsOrPolygons3d & trafficMirrors,
   const Optional<LineString3d> & stopLine, const LineStrings3d & lightBulbs)
-: TrafficLight(id, attributes, trafficLights, stopLine)  // 부모 클래스 생성자 호출
+: TrafficMirror(id, attributes, trafficMirrors, stopLine)  // 🚨   // 부모 클래스 생성자 호출 // chg 9. trafficLights -> trafficMirrors | KMS_250313
 {
   for (const auto & lightBulb : lightBulbs) {  // lightBulbs가 존재하면 추가
     addLightBulbs(lightBulb);
@@ -181,7 +184,7 @@ AutowareTrafficLight::AutowareTrafficLight(
  * @brief 신호등 전구 정보를 반환하는 함수
  * @return 신호등 전구 리스트
  */
-ConstLineStrings3d AutowareTrafficLight::lightBulbs() const
+ConstLineStrings3d AutowareTrafficMirror::lightBulbs() const // chg 10. AutowareTrafficLight -> AutowareTrafficMirror | KMS_250313
 {
   return getParameters<ConstLineString3d>(AutowareRoleNameString::LightBulbs);
 }
@@ -190,7 +193,7 @@ ConstLineStrings3d AutowareTrafficLight::lightBulbs() const
  * @brief 신호등 전구를 추가하는 함수
  * @param primitive 추가할 신호등 전구 객체
  */
-void AutowareTrafficLight::addLightBulbs(const LineStringOrPolygon3d & primitive)
+void AutowareTrafficMirror::addLightBulbs(const LineStringOrPolygon3d & primitive) // chg 10. AutowareTrafficLight -> AutowareTrafficMirror | KMS_250313
 {
   parameters()[AutowareRoleNameString::LightBulbs].emplace_back(primitive.asRuleParameter());
 }
@@ -200,7 +203,7 @@ void AutowareTrafficLight::addLightBulbs(const LineStringOrPolygon3d & primitive
  * @param primitive 제거할 신호등 전구 객체
  * @return true(제거 성공), false(제거할 전구가 없음)
  */
-bool AutowareTrafficLight::removeLightBulbs(const LineStringOrPolygon3d & primitive)
+bool AutowareTrafficMirror::removeLightBulbs(const LineStringOrPolygon3d & primitive) // chg 11. AutowareTrafficLight -> AutowareTrafficMirror | KMS_250313
 {
   return findAndErase(
     primitive.asRuleParameter(), &parameters().find(AutowareRoleNameString::LightBulbs)->second);
