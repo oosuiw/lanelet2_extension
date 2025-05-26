@@ -162,6 +162,36 @@ std::vector<lanelet::AutowareTrafficLightConstPtr> query::autowareTrafficLights(
   return tl_reg_elems;
 }
 
+//KMS_250526
+std::vector<lanelet::AutowareTrafficMirrorConstPtr> query::autowareTrafficMirrors(
+  const lanelet::ConstLanelets & lanelets)
+{
+  std::vector<lanelet::AutowareTrafficMirrorConstPtr> tl_reg_elems;
+
+  for (const auto & ll : lanelets) {
+    std::vector<lanelet::AutowareTrafficMirrorConstPtr> ll_tl_re =
+      ll.regulatoryElementsAs<lanelet::autoware::AutowareTrafficMirror>();
+
+    // insert unique tl into array
+    for (const auto & tl_ptr : ll_tl_re) {
+      lanelet::Id id = tl_ptr->id();
+      bool unique_id = true;
+
+      for (const auto & tl_reg_elem : tl_reg_elems) {
+        if (id == tl_reg_elem->id()) {
+          unique_id = false;
+          break;
+        }
+      }
+
+      if (unique_id) {
+        tl_reg_elems.push_back(tl_ptr);
+      }
+    }
+  }
+  return tl_reg_elems;
+}
+
 std::vector<lanelet::DetectionAreaConstPtr> query::detectionAreas(
   const lanelet::ConstLanelets & lanelets)
 {
